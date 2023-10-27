@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from example_interfaces.srv import AddTwoInts
+from example_interfaces.srv import AddTwoInts #import example interface
 
 import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -24,6 +24,14 @@ def main(args=None):
     # Node's default callback group is mutually exclusive. This would prevent the client response
     # from being processed until the timer callback finished, but the timer callback in this
     # example is waiting for the client response
+    #IN MY OWN WORDS, there are different types of callback groups that affect the behavior of 
+    #callbacks. when creating a node the default callback group is mutually exclusive which means
+    #that only one callback can be executed to completion at a time. in this code that means that the line
+    # result = await future will not execute because it is a waitable instance but the create_timer
+    #callback was called to get to that point so the timer callback would need to finish first which
+    #would result in a timeout whereas by changing the grouping you can process the await within
+    #the call_service callback. otherwise you get stuck spinning a node that wont be recieving or
+    #sending anything
     cb_group = ReentrantCallbackGroup()
     cli = node.create_client(AddTwoInts, 'add_two_ints', callback_group=cb_group)
     did_run = False
@@ -36,7 +44,7 @@ def main(args=None):
             req = AddTwoInts.Request()
             req.a = 41
             req.b = 1
-            future = cli.call_async(req)
+            future = cli.call_async(req) #prevents
             result = await future
             node.get_logger().info(
                 'Result of add_two_ints: for %d + %d = %d' %
@@ -49,7 +57,7 @@ def main(args=None):
 
     timer = node.create_timer(0.5, call_service, callback_group=cb_group)
 
-    while rclpy.ok() and not did_run:
+    while rclpy.ok() and not did_run: #runs when did_run is false and rclpy is running
         rclpy.spin_once(node)
 
     if did_run:
