@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from example_interfaces.srv import AddTwoInts #import example interface
+from example_interfaces.srv import AddTwoInts #from the example_interfaces package within the in the .srv module(a python file with specific code) import the AddTwoInts class
 
-import rclpy
-from rclpy.callback_groups import ReentrantCallbackGroup
+import rclpy #importing client python library, basically gives us access to top level python functions without worrying about communication between nodes
+from rclpy.callback_groups import ReentrantCallbackGroup #import reentrant callback group that allows parallel execution of callbacks, in python this is not
+                                                         #true parallelism but instead allows it to call a callback inside a callback
 
 
 def main(args=None):
-    rclpy.init(args=args)
-    node = rclpy.create_node('minimal_client')
+    rclpy.init(args=args) #initializes client library with commandline arguments
+    node = rclpy.create_node('minimal_client') #creates a node called minimal client and assigns it to the variable node
     # Node's default callback group is mutually exclusive. This would prevent the client response
     # from being processed until the timer callback finished, but the timer callback in this
     # example is waiting for the client response
@@ -32,24 +33,25 @@ def main(args=None):
     #would result in a timeout whereas by changing the grouping you can process the await within
     #the call_service callback. otherwise you get stuck spinning a node that wont be recieving or
     #sending anything
-    cb_group = ReentrantCallbackGroup()
-    cli = node.create_client(AddTwoInts, 'add_two_ints', callback_group=cb_group)
-    did_run = False
-    did_get_result = False
+    cb_group = ReentrantCallbackGroup() #creates an instance of the reentrantcallbackgroup class and assigns it to variable cb_group
+    cli = node.create_client(AddTwoInts, 'add_two_ints', callback_group=cb_group) #creates a service client called add_two_ints with the service type AddTwoInts with a unique reentrant callback group defined above
+    did_run = False #did_run variable set to False
+    did_get_result = False #did_get_result set t0 False
 
-    async def call_service():
-        nonlocal cli, node, did_run, did_get_result
-        did_run = True
-        try:
-            req = AddTwoInts.Request()
+    async def call_service(): #defines an asyncronous corutine in python called call_service()
+        nonlocal cli, node, did_run, did_get_result #for funcitons inside functions, allows you to access variables of outer function without explicitly passing them
+        did_run = True #set did_run to True
+        try: #try to run this code, if an expection occurs cancel
+            req = AddTwoInts.Request() #get the request component of the AddTwoInts service and assign them to req for assignment right after
             req.a = 41
             req.b = 1
-            future = cli.call_async(req) #prevents
-            result = await future
+            future = cli.call_async(req) #make a service call with the request class of the imported interface and asyncronously get the result as a future which is a class which represents the outcome of a task in the future
+                                         #future class has a variety of attributes that can be assigned true or false based on if the service was canceled, completed, etc.
+            result = await future #wait for the corutine that is the asyncrounous call to finish before assigning future to the variable result 
             node.get_logger().info(
                 'Result of add_two_ints: for %d + %d = %d' %
-                (req.a, req.b, result.sum))
-        finally:
+                (req.a, req.b, result.sum)) #notice result.sum is an attribute based on AddTwoInts definition
+        finally: #always run this no matter the result of the try, expect statements
             did_get_result = True
 
     while not cli.wait_for_service(timeout_sec=1.0):
