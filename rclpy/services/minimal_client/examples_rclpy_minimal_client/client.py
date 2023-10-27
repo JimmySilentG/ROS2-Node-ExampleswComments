@@ -22,7 +22,7 @@ def main(args=None):
     node = rclpy.create_node('minimal_client') #creates a ROS2 node called 'minimal_client' and assigns it to the variable node
     cli = node.create_client(AddTwoInts, 'add_two_ints') #creates a new service client with the service type AddTwoInts that was imported earlier and names the ROS service 'add_two_ints' and assigns it to the variable cli
 
-    req = AddTwoInts.Request() #references the defined fields in the request class of the service definition and assigns it to the variable req, NOT SURE IF THIS WORKS(according to GPT, the classes are generated automagically)
+    req = AddTwoInts.Request() #references the defined fields in the request class of the service definition and assigns it to the variable req, IT WORKS EVEN WITH CUSTOM INTERFACES!!!!(according to GPT, the classes are generated automagically)
     req.a = 41 #assigns the properties of the request class to integers. must match type in service definition
     req.b = 1
     while not cli.wait_for_service(timeout_sec=1.0): #method of the client class that waits for server to become ready, returns true if so or false if not before timeout
